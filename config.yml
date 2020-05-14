@@ -1,0 +1,10 @@
+database:
+  host: localhost
+  port: 3306
+  database: auth
+  username: root
+  password: password
+  
+#In what worlds will the plugin synchronize time?
+enable_world:
+  - world

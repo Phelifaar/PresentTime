@@ -1,0 +1,10 @@
+name: PresentTime
+main: ezo.phelifar.presenttime.main
+version: 7
+author: Phelifar
+website: https://www.spigotmc.org/resources/presenttime-1-7-1-15.77038
+
+commands:
+   mytime:
+      description: Setup player's UTC
+      usage: /mytime <hour> <minutes>
