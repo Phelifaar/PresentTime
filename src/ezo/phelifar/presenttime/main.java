@@ -19,17 +19,21 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class main extends JavaPlugin implements Listener, CommandExecutor
 {
-    
+
+    Date date;
+	
     BukkitRunnable client = new BukkitRunnable() {
         public void run() {
-            Date date = new Date();
-            
+        	date = new Date();
             long tick = date.getHours() * 1000 + 18000 + date.getMinutes() * 1000 / 60 + tickUTC;
             if (tick >= 24000L) {
                 tick -= 24000L;
             }
         	if(player != null) {
-        		if(getConfig().getList("enable_world").contains(player.getWorld().getName())) player.setPlayerTime(tick, true);
+        		if(getConfig().getStringList("enable_world").contains(player.getWorld().getName())) 
+        			player.setPlayerTime(tick, false);
+        		else 
+        			player.setPlayerTime(player.getWorld().getTime(), true);
         	}
         }
     };
@@ -55,11 +59,13 @@ public class main extends JavaPlugin implements Listener, CommandExecutor
 
         host = getConfig().getString("database.host");
         database = getConfig().getString("database.database");
-        username = getConfig().getString("database.username");
+        username = 	getConfig().getString("database.username");
         password = getConfig().getString("database.password");
         port = getConfig().getInt("database.port");
         
-        client.runTaskTimer(this, 0L, 20L);        
+        client.runTaskTimer(this, 0L, 1L);   
+        
+        createDB();
     }
     
     public void openConnection() throws SQLException, ClassNotFoundException {
@@ -98,15 +104,31 @@ public class main extends JavaPlugin implements Listener, CommandExecutor
 
     }
     
+    public void createDB() {
+    	try {    
+            openConnection();
+            Statement statement = connection.createStatement();
+        	ResultSet isTable = statement.executeQuery("SHOW TABLES FROM " + database + " LIKE 'playerutc'");
+        	if (!isTable.next()) 
+            	 statement.executeUpdate("CREATE TABLE "+ database +".`playerutc` ( `NICK` TEXT NOT NULL , `UTC` INT NOT NULL ) ENGINE = InnoDB;");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-    	Date timeServer = new Date();
     	if(args.length < 2) return false;
     	if(sender instanceof Player) player = (Player) sender;
-    	tickUTC = ((Long.parseLong(args[0]) - timeServer.getHours()) * 1000) + ((Long.parseLong(args[1]) - timeServer.getMinutes()) * 1000 / 60);
+    	tickUTC = ((Long.parseLong(args[0]) - date.getHours()) * 1000) + ((Long.parseLong(args[1]) - date.getMinutes()) * 1000 / 60);
 
-        if (tickUTC >= 24000L) {
+        if (tickUTC > 24000L) {
         	tickUTC -= 24000L;
+        }
+        if (tickUTC == 24000L) {
+        	tickUTC = 0L;
         }
         if (tickUTC <= 0L) {
         	tickUTC += 24000L;
